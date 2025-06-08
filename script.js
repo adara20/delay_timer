@@ -38,6 +38,7 @@ function initAudio() {
     Object.values(elements.audio).forEach(audio => {
         audio.load();
         audio.volume = 1.0;
+        audio.preload = 'auto';
     });
 }
 
@@ -71,13 +72,17 @@ function playSound(sound, startTime = 0, duration = null) {
         }, duration);
     }
     
-    // Play the sound
+    // Play the sound with error handling and retry
     const playPromise = sound.play();
     
-    // Handle any play() errors
     if (playPromise !== undefined) {
         playPromise.catch(error => {
             console.log("Audio playback failed:", error);
+            // Retry playing the sound once
+            setTimeout(() => {
+                sound.currentTime = startTime;
+                sound.play().catch(e => console.log("Retry failed:", e));
+            }, 100);
         });
     }
 }
@@ -242,7 +247,11 @@ function beginCountDown() {
         const elapsed = TimerState.countdownTime - (Date.now() - TimerState.startTime);
         
         if (elapsed <= 0) {
+            // Clear all intervals
             clearInterval(TimerState.timerInterval);
+            clearInterval(TimerState.tickInterval);
+            // Stop all sounds
+            stopAllBeeps();
             elements.timer.textContent = "00:00:000";
             updateButtonStates('initial');
             TimerState.running = false;
@@ -253,22 +262,42 @@ function beginCountDown() {
     
     // Handle audio based on countdown duration
     if (TimerState.countdownTime <= 60000) {
-        // For countdowns of 60 seconds or less, play the last portion of the BBC audio
+        // For countdowns of 60 seconds or less, only play the BBC audio
         stopAllBeeps();
         const countdownSeconds = TimerState.countdownTime / 1000;
         const bbcAudio = elements.audio.bbc;
+        
+        // Ensure the audio is loaded before playing
+        bbcAudio.load();
         bbcAudio.currentTime = 60 - countdownSeconds;
-        playSound(bbcAudio, 60 - countdownSeconds, countdownSeconds * 1000);
+        
+        // Add a small delay before playing to ensure proper loading
+        setTimeout(() => {
+            playSound(bbcAudio, 60 - countdownSeconds, countdownSeconds * 1000);
+        }, 100);
     } else {
-        // For longer countdowns, play tick every 5 seconds and BBC audio in the last minute
+        // For longer countdowns, play tick every 5 seconds until the last minute
         TimerState.tickInterval = setInterval(() => {
-            playSound(elements.audio.tick);
+            const timeLeft = TimerState.countdownTime - (Date.now() - TimerState.startTime);
+            // Only play tick if we're not in the last minute
+            if (timeLeft > 60000) {
+                playSound(elements.audio.tick);
+            }
         }, 5000);
         
+        // When entering the last minute, stop ticks and play BBC audio
         setTimeout(() => {
             clearInterval(TimerState.tickInterval);
             stopAllBeeps();
-            playSound(elements.audio.bbc, 0, 60000);
+            const bbcAudio = elements.audio.bbc;
+            
+            // Ensure the audio is loaded before playing
+            bbcAudio.load();
+            
+            // Add a small delay before playing to ensure proper loading
+            setTimeout(() => {
+                playSound(bbcAudio, 0, 60000);
+            }, 100);
         }, TimerState.countdownTime - 60000);
     }
 }
