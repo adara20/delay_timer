@@ -60,6 +60,19 @@ function stopAllBeeps() {
     });
 }
 
+function unlockAudio() {
+    Object.values(elements.audio).forEach(audio => {
+        audio.volume = 0;
+        audio.play().then(() => {
+            audio.pause();
+            audio.volume = 1.0;
+            audio.currentTime = 0;
+        }).catch(e => {
+            console.log("Unlock failed:", e);
+        });
+    });
+}
+
 function playSound(sound, startTime = 0, duration = null) {
     // Reset the sound to the beginning
     sound.currentTime = startTime;
@@ -77,11 +90,11 @@ function playSound(sound, startTime = 0, duration = null) {
     
     if (playPromise !== undefined) {
         playPromise.catch(error => {
-            console.log("Audio playback failed:", error);
+            console.log("Audio playback failed:", error.message, sound.src);
             // Retry playing the sound once
             setTimeout(() => {
                 sound.currentTime = startTime;
-                sound.play().catch(e => console.log("Retry failed:", e));
+                sound.play().catch(e => console.log("Retry failed:", e.message, sound.src));
             }, 100);
         });
     }
@@ -154,6 +167,9 @@ function selectMode(selectedMode) {
 }
 
 function startTimer() {
+    // Unlock all audio elements for mobile
+    unlockAudio();
+    
     if (TimerState.running) return;
     
     TimerState.running = true;
