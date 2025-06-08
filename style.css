@@ -1,0 +1,135 @@
+/* Reset for consistent styling across browsers */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Body Styling */
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #1c1c1c;
+    color: #fff;
+    text-align: center;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    overflow: hidden; /* Prevent scrolling issues on mobile */
+}
+
+/* Heading Style */
+h1 {
+    font-size: 36px;
+    margin-bottom: 20px;
+    color: #f39c12;
+}
+
+/* Timer Display */
+#timer {
+    font-size: 48px;
+    margin: 20px;
+    padding: 10px;
+    background-color: #2d3436;
+    border-radius: 10px;
+    width: 230px;
+    text-align: center;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    transition: background-color 0.3s;
+}
+
+/* Button Styles */
+button, input {
+    font-size: 18px;
+    margin: 10px;
+    padding: 12px 20px;
+    border: none;
+    background-color: #f39c12;
+    color: #fff;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+}
+
+button:hover, input:hover {
+    background-color: #e67e22;
+    transform: scale(1.05);
+    box-shadow: 0 6px 8px rgba(0, 0, 0, 0.2);
+}
+
+button:active, input:active {
+    background-color: #d35400;
+    transform: scale(1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Input Fields */
+input {
+    width: 80px; /* Increased width for input fields */
+    text-align: center;
+    font-size: 16px;
+    padding: 10px;
+}
+
+/* Hidden Elements */
+.hidden {
+    display: none;
+}
+
+/* Container for Settings */
+#modeSelection {
+    margin-bottom: 20px;
+}
+
+/* Form Section */
+.form-section {
+    margin-top: 20px;
+}
+
+/* Mobile Responsiveness */
+@media screen and (max-width: 1024px) {
+    h1 {
+        font-size: 30px;
+    }
+
+    #timer {
+        font-size: 36px;
+        width: 150px;
+    }
+
+    button, input {
+        font-size: 16px;
+        padding: 10px 15px;
+    }
+
+    input {
+        width: 70px; /* Adjusting width for mobile */
+    }
+}
+
+@media screen and (max-width: 600px) {
+    body {
+        padding: 10px;
+    }
+
+    h1 {
+        font-size: 28px;
+    }
+
+    #timer {
+        font-size: 32px;
+        width: 130px;
+    }
+
+    button, input {
+        font-size: 14px;
+        padding: 8px 12px;
+    }
+
+    input {
+        width: 60px; /* Adjusting input width for very small screens */
+    }
+}

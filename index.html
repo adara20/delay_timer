@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Workout Timer</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h1>Workout Timer</h1>
+    <div id="modeSelection">
+        <button onclick="selectMode('countUp')">Count Up</button>
+        <button onclick="selectMode('countDown')">Count Down</button>
+    </div>
+    
+    <div id="countDownSettings" class="hidden form-section">
+        <label for="minutesInput">Minutes: </label>
+        <input type="number" id="minutesInput" value="0" min="0">
+        <label for="secondsInput">Seconds: </label>
+        <input type="number" id="secondsInput" value="30" min="0" max="59">
+    </div>
+    
+    <div id="delaySettings" class="hidden form-section">
+        <label for="delayInput">Delay (seconds): </label>
+        <input type="number" id="delayInput" value="5" min="0">
+    </div>
+    
+    <div id="timer">00:00:000</div>
+    <button id="startButton" class="hidden" onclick="startTimer()">Start</button>
+    <button id="stopButton" class="hidden" onclick="stopTimer()">Stop</button>
+    <button id="resetButton" class="hidden" onclick="resetTimer()">Reset</button>
+    
+    <audio id="beep" src="beep1.mp3"></audio>
+    <audio id="startBeep" src="beep2.mp3"></audio>
+    <audio id="tick" src="beep3.mp3"></audio>
+    <audio id="bbc" src="bbc.wav"></audio>
+    
+    <script>
+        let mode = "";
+        let delay;
+        let countdownTime;
+        let startTime;
+        let timerInterval;
+        let delayInterval;
+        let tickInterval;
+        let running = false;
+        
+        function formatTime(elapsed) {
+            let minutes = Math.floor(elapsed / 60000).toString().padStart(2, '0');
+            let seconds = Math.floor((elapsed % 60000) / 1000).toString().padStart(2, '0');
+            let milliseconds = (elapsed % 1000).toString().padStart(3, '0');
+            return `${minutes}:${seconds}:${milliseconds}`;
+        }
+        
+        function selectMode(selectedMode) {
+            mode = selectedMode;
+            resetPage();
+            document.getElementById("modeSelection").classList.add("hidden");
+            document.getElementById("delaySettings").classList.remove("hidden");
+            document.getElementById("startButton").classList.remove("hidden");
+            document.getElementById("resetButton").classList.remove("hidden");
+            
+            if (mode === "countDown") {
+                document.getElementById("countDownSettings").classList.remove("hidden");
+            }
+        }
+        
+        function resetPage() {
+            // Hide settings and reset inputs
+            document.getElementById("countDownSettings").classList.add("hidden");
+            document.getElementById("delaySettings").classList.add("hidden");
+            document.getElementById("modeSelection").classList.remove("hidden");
+            
+            // Reset inputs
+            document.getElementById('minutesInput').value = 0;
+            document.getElementById('secondsInput').value = 30;
+            document.getElementById('delayInput').value = 5;
+            document.getElementById('timer').textContent = "00:00:000";
+            stopAllBeeps();
+            clearInterval(timerInterval);
+            clearInterval(delayInterval);
+            clearInterval(tickInterval);
+            running = false;
+        }
+        
+        function startTimer() {
+            if (running) return;
+            running = true;
+            delay = parseInt(document.getElementById('delayInput').value) || 5;
+            document.getElementById('timer').textContent = `Get Ready: ${delay}`;
+            
+            delayInterval = setInterval(() => {
+                document.getElementById('beep').play();
+                delay--;
+                if (delay > 0) {
+                    document.getElementById('timer').textContent = `Get Ready: ${delay}`;
+                } else {
+                    clearInterval(delayInterval);
+                    document.getElementById('startBeep').play();
+                    mode === "countUp" ? beginCountUp() : beginCountDown();
+                }
+            }, 1000);
+        }
+        
+        function beginCountUp() {
+            startTime = Date.now();
+            timerInterval = setInterval(() => {
+                let elapsed = Date.now() - startTime;
+                document.getElementById('timer').textContent = formatTime(elapsed);
+            }, 10);
+            
+            tickInterval = setInterval(() => {
+                document.getElementById('tick').play();
+            }, 5000);
+        }
+        
+        function beginCountDown() {
+            let minutes = parseInt(document.getElementById('minutesInput').value) || 0;
+            let seconds = parseInt(document.getElementById('secondsInput').value) || 0;
+            countdownTime = (minutes * 60 + seconds) * 1000;
+            startTime = Date.now();
+            
+            timerInterval = setInterval(() => {
+                let elapsed = countdownTime - (Date.now() - startTime);
+                if (elapsed <= 0) {
+                    clearInterval(timerInterval);
+                    document.getElementById('timer').textContent = "00:00:000";
+                } else {
+                    document.getElementById('timer').textContent = formatTime(elapsed);
+                }
+            }, 10);
+            
+            if (countdownTime <= 60000) {
+                stopAllBeeps();
+                document.getElementById('bbc').currentTime = 60 - countdownTime / 1000;
+                document.getElementById('bbc').play();
+            } else {
+                tickInterval = setInterval(() => {
+                    document.getElementById('tick').play();
+                }, 5000);
+                setTimeout(() => {
+                    clearInterval(tickInterval);
+                    stopAllBeeps();
+                    document.getElementById('bbc').play();
+                }, countdownTime - 60000);
+            }
+        }
+        
+        function stopAllBeeps() {
+            document.getElementById('beep').pause();
+            document.getElementById('beep').currentTime = 0;
+            document.getElementById('startBeep').pause();
+            document.getElementById('startBeep').currentTime = 0;
+            document.getElementById('tick').pause();
+            document.getElementById('tick').currentTime = 0;
+        }
+        
+        function stopTimer() {
+            running = false;
+            clearInterval(timerInterval);
+            clearInterval(delayInterval);
+            clearInterval(tickInterval);
+            stopAllBeeps();
+            document.getElementById('startBeep').play();
+        }
+        
+        function resetTimer() {
+            resetPage();
+        }
+    </script>
+</body>
+</html>
