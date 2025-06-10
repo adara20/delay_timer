@@ -179,15 +179,32 @@ function startTimer() {
     TimerState.delay = parseInt(elements.delayInput.value) || 5;
     elements.timer.textContent = `Get Ready: ${TimerState.delay}`;
     
+    // Start appropriate audio based on mode
+    if (TimerState.mode === "countDown") {
+        const minutes = parseInt(elements.minutesInput.value) || 0;
+        const seconds = parseInt(elements.secondsInput.value) || 0;
+        const totalDuration = (TimerState.delay + minutes * 60 + seconds) * 1000;
+        
+        // Start BBC audio for the total duration
+        const bbcAudio = elements.audio.bbc;
+        bbcAudio.load();
+        bbcAudio.currentTime = 60 - (totalDuration / 1000);
+        playSound(bbcAudio, 60 - (totalDuration / 1000), totalDuration);
+    } else {
+        // For count up, start tick sound immediately and continue every 5 seconds
+        playSound(elements.audio.tick); // Play first tick immediately
+        TimerState.tickInterval = setInterval(() => {
+            playSound(elements.audio.tick);
+        }, 5000);
+    }
+    
     TimerState.delayInterval = setInterval(() => {
-        playSound(elements.audio.beep);
         TimerState.delay--;
         
         if (TimerState.delay > 0) {
             elements.timer.textContent = `Get Ready: ${TimerState.delay}`;
         } else {
             clearInterval(TimerState.delayInterval);
-            playSound(elements.audio.startBeep);
             TimerState.startTime = Date.now();
             TimerState.mode === "countUp" ? beginCountUp() : beginCountDown();
         }
@@ -230,28 +247,10 @@ function resumeTimer() {
 }
 
 function beginCountUp() {
-    // Clear any existing intervals first
-    clearInterval(TimerState.timerInterval);
-    clearInterval(TimerState.tickInterval);
-    
     TimerState.timerInterval = setInterval(() => {
         const elapsed = Date.now() - TimerState.startTime;
         elements.timer.textContent = formatTime(elapsed);
     }, 10);
-    
-    // Calculate when the next tick should play
-    const elapsed = Date.now() - TimerState.startTime;
-    const nextTickIn = 5000 - (elapsed % 5000);
-    
-    // Play first tick immediately if we're at the start
-    if (elapsed < 5000) {
-        playSound(elements.audio.tick);
-    }
-    
-    // Set up the tick interval
-    TimerState.tickInterval = setInterval(() => {
-        playSound(elements.audio.tick);
-    }, 5000);
 }
 
 function beginCountDown() {
@@ -275,47 +274,6 @@ function beginCountDown() {
             elements.timer.textContent = formatTime(elapsed);
         }
     }, 10);
-    
-    // Handle audio based on countdown duration
-    if (TimerState.countdownTime <= 60000) {
-        // For countdowns of 60 seconds or less, only play the BBC audio
-        stopAllBeeps();
-        const countdownSeconds = TimerState.countdownTime / 1000;
-        const bbcAudio = elements.audio.bbc;
-        
-        // Ensure the audio is loaded before playing
-        bbcAudio.load();
-        bbcAudio.currentTime = 60 - countdownSeconds;
-        
-        // Add a small delay before playing to ensure proper loading
-        setTimeout(() => {
-            playSound(bbcAudio, 60 - countdownSeconds, countdownSeconds * 1000);
-        }, 100);
-    } else {
-        // For longer countdowns, play tick every 5 seconds until the last minute
-        TimerState.tickInterval = setInterval(() => {
-            const timeLeft = TimerState.countdownTime - (Date.now() - TimerState.startTime);
-            // Only play tick if we're not in the last minute
-            if (timeLeft > 60000) {
-                playSound(elements.audio.tick);
-            }
-        }, 5000);
-        
-        // When entering the last minute, stop ticks and play BBC audio
-        setTimeout(() => {
-            clearInterval(TimerState.tickInterval);
-            stopAllBeeps();
-            const bbcAudio = elements.audio.bbc;
-            
-            // Ensure the audio is loaded before playing
-            bbcAudio.load();
-            
-            // Add a small delay before playing to ensure proper loading
-            setTimeout(() => {
-                playSound(bbcAudio, 0, 60000);
-            }, 100);
-        }, TimerState.countdownTime - 60000);
-    }
 }
 
 function resetTimer() {
